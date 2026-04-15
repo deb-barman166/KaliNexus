@@ -48,8 +48,6 @@ UI Engine| Desktop & interaction layer
 git clone https://github.com/deb-barman166/KaliNexus.git
 cd KaliNexus
 
-👉 তারপর "index.html" open কর browser-এ
-
 ---
 
 💻 Usage
@@ -106,7 +104,7 @@ sqlmap
 
 ---
 
-🎨 UI Preview
+🎨 Mobile UI Preview
 
 <p align="center">
   <img src="assets/ui.png" width="90%">
