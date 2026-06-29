@@ -1,5 +1,6 @@
 import React from 'react';
 import { useFileSystemStore } from '../store/useFileSystemStore';
+import { PythonInterpreter } from '../components/PythonInterpreter';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -21,6 +22,7 @@ export const executeCommand = async (
           <div className="mb-2 text-yellow-400">Note: Many commands are simulated via AI. Try any standard Linux command!</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-2 gap-y-1 mt-2 text-sm">
             <div><span className="text-green-400">help</span></div>
+            <div><span className="text-green-400">ai</span></div>
             <div><span className="text-green-400">clear</span></div>
             <div><span className="text-green-400">ls</span></div>
             <div><span className="text-green-400">cd</span></div>
@@ -56,6 +58,8 @@ export const executeCommand = async (
             <div><span className="text-green-400">top</span></div>
             <div><span className="text-green-400">ps</span></div>
             <div><span className="text-green-400">tar</span></div>
+            <div><span className="text-green-400">git clone</span></div>
+            <div><span className="text-green-400">python3</span></div>
           </div>
           <div className="mt-2 text-gray-400 italic">...and hundreds more supported via AI simulation.</div>
         </div>
@@ -63,6 +67,40 @@ export const executeCommand = async (
 
     case 'clear':
       return <div className="h-[1000px]"></div>;
+
+    case 'ai': {
+      const promptText = args.slice(1).join(' ');
+      if (!promptText) {
+        return (
+          <div className="text-gray-400">
+            <div className="text-cyan-400 font-bold mb-1">Kali AI CLI Agent</div>
+            <div>Usage: <span className="text-green-400">ai [your prompt or question]</span></div>
+            <div>Example: <span className="text-green-400">ai how to run an nmap syn scan</span></div>
+            <div className="mt-1 text-xs text-gray-500">Note: Uses .env API keys or Offline mode automatically!</div>
+          </div>
+        );
+      }
+
+      try {
+        const { useAIStore } = await import('../store/useAIStore');
+        const { queryAI } = await import('./aiService');
+        
+        const aiState = useAIStore.getState();
+        const activeProvider = aiState.activeProvider;
+        const currentConfig = aiState.configs[activeProvider];
+
+        // Let queryAI execute directly so server-side .env keys or offline modes work seamlessly
+        const response = await queryAI(activeProvider, currentConfig, promptText, []);
+        return (
+          <div className="text-gray-200 whitespace-pre-wrap font-mono bg-[#111] p-3 rounded border border-[#2d2d2d] leading-relaxed">
+            <div className="text-xs text-cyan-400 font-bold mb-2 uppercase">Kali AI Assistant ({currentConfig.model})</div>
+            {response}
+          </div>
+        );
+      } catch (err: any) {
+        return <div className="text-red-400">Error: {err.message}</div>;
+      }
+    }
 
     case 'pwd':
       return <div>{currentPath}</div>;
@@ -571,8 +609,236 @@ Apache 2.4.49 - Path Traversal           | multiple/webapps/50383.sh
         </pre>
       );
 
+    case 'git': {
+      const sub = args[1];
+      if (sub === 'clone') {
+        const repoUrl = args[2];
+        if (!repoUrl) {
+          return <div className="text-red-400">fatal: You must specify a repository to clone.</div>;
+        }
+
+        const { useSystemStore } = await import('../store/useSystemStore');
+        const isOnline = useSystemStore.getState().isOnline;
+
+        let repoName = repoUrl.split('/').pop()?.replace('.git', '') || 'cloned_repo';
+
+        if (!isOnline) {
+          await delay(1200);
+          return (
+            <div className="text-red-400 font-mono">
+              <div>Cloning into '{repoName}'...</div>
+              <div className="mt-1">fatal: Could not resolve host: github.com</div>
+              <div className="text-gray-400 text-xs mt-1">💡 Tip: You are offline. Click the 'Offline' button in the desktop taskbar to switch to Online and enable cloning tools!</div>
+            </div>
+          );
+        }
+
+        await delay(2000);
+        const targetPath = `${currentPath}/${repoName}`;
+        
+        fs.mkdir(targetPath);
+
+        // Seed cloned repository files based on repo name
+        const lowerRepo = repoName.toLowerCase();
+        if (lowerRepo.includes('sqlmap')) {
+          repoName = 'sqlmap';
+          fs.writeFile(`${targetPath}/README.md`, `# SQLMap\nAutomatic SQL injection and database takeover tool.\n\nRun:\n$ python3 sqlmap.py`);
+          fs.writeFile(`${targetPath}/sqlmap.py`, `import time
+print("\\x1b[1;33m")
+print("        ___")
+print("       __H__")
+print(" ___ ___[\\"]_____ ___ ___  {1.7.2#stable}")
+print("|_ -| . [,]     | .'| . |")
+print("|___|_  [\\"]_|_|_|__,|  _|")
+print("      |_|V...       |_|   https://sqlmap.org")
+print("\\x1b[0m")
+time.sleep(0.5)
+url = input("Enter target URL: ")
+print("[*] testing connection to the target URL")
+time.sleep(1.0)
+print("[INFO] confirming GET parameter is vulnerable to SQL injection...")
+time.sleep(0.8)
+print("\\x1b[1;32mSUCCESS: Found vulnerable parameter 'id'! (DBMS: MySQL)\\x1b[0m")
+print("Payload: id=1' UNION SELECT NULL, username, password FROM users--")`);
+        } else if (lowerRepo.includes('sherlock')) {
+          repoName = 'sherlock';
+          fs.writeFile(`${targetPath}/README.md`, `# Sherlock\nHunt down social media profiles by username.\n\nRun:\n$ python3 sherlock.py <username>`);
+          fs.writeFile(`${targetPath}/sherlock.py`, `import time
+print("\\x1b[1;36m")
+print(" ._ _  |__  _ ._ |  _   _ |  _ ")
+print("  _> | | | |(/_|  | (_) (_ |<(/_")
+print("                       v0.14.3")
+print("\\x1b[0m")
+time.sleep(0.5)
+user = input("Enter target username to hunt: ")
+print("[*] Searching 350+ social networks for " + user)
+time.sleep(1.0)
+print("\\x1b[1;32m[+] GitHub: https://github.com/" + user + "\\x1b[0m")
+print("\\x1b[1;32m[+] Twitter: https://twitter.com/" + user + "\\x1b[0m")
+print("\\x1b[1;32m[+] Instagram: https://instagram.com/" + user + "\\x1b[0m")
+print("[*] Search completed. Stay ethical!")`);
+        } else if (lowerRepo.includes('nmap')) {
+          repoName = 'nmap';
+          fs.writeFile(`${targetPath}/README.md`, `# Nmap\nSimulated Script Scanner\n\nRun:\n$ ./nmap.sh`);
+          fs.writeFile(`${targetPath}/nmap.sh`, `echo "Running simulated Nmap scanner..."\necho "Scanning localhost (127.0.0.1)..."\necho "Port 80/tcp is OPEN (HTTP)"`);
+        } else {
+          // Dynamic general Tool/Repository generator! Supports ANY Github Repository cloned!
+          const cleanName = repoName.replace(/[-_]/g, ' ');
+          const scriptName = repoName.toLowerCase().replace(/[-_]/g, '');
+
+          // 1. README.md
+          fs.writeFile(`${targetPath}/README.md`, `# ${cleanName}\nSuccessfully cloned ${cleanName} repository.\n\n## Installation\nRun the setup installer:\n\`\`\`bash\npython3 Setup.py\n\`\`\`\n\n## Run Tool\n\`\`\`bash\npython3 ${scriptName}.py\n\`\`\``);
+
+          // 2. Setup.py / setup.py
+          const setupPyContent = `import time
+print("\\x1b[1;36m[*] Starting ${cleanName} Setup Installer...\\x1b[0m")
+time.sleep(0.5)
+print("[+] Target Platform: Linux (Kali WebOS Core)")
+time.sleep(0.3)
+print("[+] Checking Python version... Python 3.11.2 - OK")
+time.sleep(0.4)
+print("[+] Installing dependencies from requirements.txt...")
+time.sleep(0.8)
+print("    - Installing 'requests'... [SUCCESS]")
+time.sleep(0.3)
+print("    - Installing 'cryptography'... [SUCCESS]")
+time.sleep(0.4)
+print("[+] Creating binary links in /usr/bin/${scriptName} ...")
+time.sleep(0.6)
+print("\\x1b[1;32m[+] ${cleanName} has been successfully installed!\\x1b[0m")
+time.sleep(0.3)
+print("[!] Run: python3 ${scriptName}.py to start the tool suite.");`;
+
+          fs.writeFile(`${targetPath}/Setup.py`, setupPyContent);
+          fs.writeFile(`${targetPath}/setup.py`, setupPyContent);
+
+          // 3. requirements.txt
+          fs.writeFile(`${targetPath}/requirements.txt`, `requests>=2.31.0\ncryptography>=41.0.1\n`);
+
+          // 4. [scriptName].py (Interactive CLI Utility console!)
+          fs.writeFile(`${targetPath}/${scriptName}.py`, `import time
+print("\\x1b[1;35m")
+print("██████╗ ██╗   ██╗██╗██╗     ██████╗ ██╗    ██╗ █████╗ ██████╗ ███████╗")
+print("██╔══██╗██║   ██║██║██║     ██╔══██╗██║    ██║██╔══██╗██╔══██╗██╔════╝")
+print("██████╔╝██║   ██║██║██║     ██║  ██║██║ █╗ ██║███████║██████╔╝█████╗  ")
+print("██╔══██╗██║   ██║██║██║     ██║  ██║██║███╗██║██╔══██║██╔══██╗██╔══╝  ")
+print("██████╔╝╚██████╔╝██║███████╗██████╔╝╚███╔███╔╝██║  ██║██║  ██║███████╗")
+print("╚══════╝  ╚═════╝ ╚═╚══════╝╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝")
+print("                       ${cleanName} Console Utility")
+print("\\x1b[0m")
+time.sleep(0.4)
+print("Select an option to run:")
+print(" [1] Vulnerability Audit (Simulated)")
+print(" [2] Targeted Wordlist Generator (Simulated)")
+print(" [3] Malware Threat Sandbox (Simulated)")
+print(" [4] Exit")
+print("")
+opt = input("${scriptName} > ")
+if opt == "1":
+    print("[*] Executing security scanner against loopback address...")
+    time.sleep(0.8)
+    print("[INFO] Querying system ports...")
+    time.sleep(0.5)
+    print("\\x1b[1;32m[+] Safe! No vulnerabilities detected in local core configuration.\\x1b[0m")
+elif opt == "2":
+    print("[*] Launching Custom Wordlist Generator...")
+    name = input("Enter target person or company name: ")
+    year = input("Enter birth year or launch year: ")
+    print("[+] Generating targeted combinations for " + name + " " + year + "...")
+    time.sleep(0.8)
+    print("\\x1b[1;32m[SUCCESS] Generated 142 potential keys. Saved to 'keys.txt'.\\x1b[0m")
+elif opt == "3":
+    print("[*] Starting Malware Threat Sandbox...")
+    time.sleep(0.5)
+    print("[INFO] Opening sandbox container...")
+    time.sleep(0.6)
+    print("\\x1b[1;32m[INFO] Analysis complete. Loaded file is safe to execute.\\x1b[0m")
+else:
+    print("Exiting ${cleanName}. Stay safe!")`);
+        }
+
+        return (
+          <div className="text-gray-300 font-mono">
+            <div>Cloning into '{repoName}'...</div>
+            <div>remote: Enumerating objects: 142, done.</div>
+            <div>remote: Counting objects: 100% (142/142), done.</div>
+            <div>remote: Compressing objects: 100% (90/90), done.</div>
+            <div className="text-green-400">Receiving objects: 100% (12401/12401), 9.34 MiB | 3.82 MiB/s, done.</div>
+            <div>Resolving deltas: 100% (5211/5211), done.</div>
+            <div className="mt-1 text-green-400 font-bold">Success: Repository cloned into ./{repoName}/</div>
+            <div className="text-xs text-gray-400 mt-1">Try: 'cd {repoName}' and run: 'python3 Setup.py' or 'python3 {repoName.toLowerCase().replace(/[-_]/g, "")}.py' !</div>
+          </div>
+        );
+      }
+      return (
+        <div className="text-gray-400">
+          <div>Usage: <span className="text-green-400">git clone [repository-url]</span></div>
+          <div>Example: <span className="text-green-400">git clone https://github.com/v4lkyr0/Buildware-Tools.git</span></div>
+        </div>
+      );
+    }
+
+    case 'python':
+    case 'python3': {
+      const filename = args[1];
+      if (!filename) {
+        return (
+          <div className="text-gray-300">
+            <div>Python 3.11.2 (main, Feb 12 2026, 11:20:15)</div>
+            <div>[GCC 12.2.0] on linux</div>
+            <div>Type "help", "copyright", "credits" or "license" for more information.</div>
+            <div className="text-yellow-400 mt-1">(Simulated interactive shell is not supported. Please run with a file, e.g. 'python3 file.py')</div>
+          </div>
+        );
+      }
+
+      // Read file in current directory
+      const filePath = filename.startsWith('/') ? filename : `${currentPath}/${filename}`;
+      const fileContent = fs.readFile(filePath);
+      if (fileContent === null) {
+        return <div className="text-red-400 font-mono">python3: can't open file '{filename}': No such file or directory</div>;
+      }
+
+      return (
+        <PythonInterpreter 
+          filename={filename} 
+          fileContent={fileContent} 
+          initialArgs={args} 
+        />
+      );
+    }
+
     default:
       if (cmd === '') return null;
+
+      // Handle running scripts locally starting with ./
+      if (cmd.startsWith('./')) {
+        const filename = cmd.slice(2);
+        const filePath = `${currentPath}/${filename}`;
+        const fileContent = fs.readFile(filePath);
+        if (fileContent === null) {
+          return <div className="text-red-400">bash: {cmd}: No such file or directory</div>;
+        }
+        
+        if (filename.endsWith('.py')) {
+          return (
+            <PythonInterpreter 
+              filename={filename} 
+              fileContent={fileContent} 
+              initialArgs={[filename]} 
+            />
+          );
+        }
+
+        await delay(500);
+        return (
+          <div className="text-gray-300 font-mono">
+            <div className="text-xs text-gray-500">--- Running script {filename} ---</div>
+            <div className="whitespace-pre-wrap mt-1 text-green-400">{fileContent}</div>
+            <div className="text-xs text-gray-500 mt-2">--- Script finished successfully ---</div>
+          </div>
+        );
+      }
       
       const knownOfflineCommands = [
         'cal', 'uname', 'hostname', 'uptime', 'echo', 'exit', 'history', 'help', 'man',

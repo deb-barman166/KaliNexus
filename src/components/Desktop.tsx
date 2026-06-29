@@ -8,6 +8,7 @@ import { FileExplorer } from './apps/FileExplorer';
 import { Browser } from './apps/Browser';
 import { TextEditor } from './apps/TextEditor';
 import { Settings } from './apps/Settings';
+import { AIAssistant } from './apps/AIAssistant';
 
 const APPS = {
   terminal: Terminal,
@@ -15,6 +16,7 @@ const APPS = {
   browser: Browser,
   textEditor: TextEditor,
   settings: Settings,
+  aiAssistant: AIAssistant,
 };
 
 const DESKTOP_ICONS = [
@@ -24,6 +26,13 @@ const DESKTOP_ICONS = [
     icon: 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Kali-dragon-icon.svg',
     component: 'terminal',
     allowMultiple: true
+  },
+  {
+    id: 'aiAssistant',
+    title: 'AI Assistant',
+    icon: 'https://cdn-icons-png.flaticon.com/512/2103/2103832.png',
+    component: 'aiAssistant',
+    allowMultiple: false
   },
   {
     id: 'fileExplorer',

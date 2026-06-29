@@ -25,6 +25,8 @@ interface SystemState {
   user: { name: string; pass: string };
   isAuthenticated: boolean;
   desktopIcons: Record<string, { x: number; y: number }>;
+  isOnline: boolean;
+  setIsOnline: (online: boolean) => void;
   login: (pass: string) => boolean;
   logout: () => void;
   updateUser: (name: string, pass: string) => void;
@@ -45,18 +47,17 @@ export const useSystemStore = create<SystemState>()(
       activeWindowId: null,
       highestZIndex: 10,
       user: { name: 'kali', pass: 'kali' },
-      isAuthenticated: false,
+      isAuthenticated: true,
       desktopIcons: {},
+      isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+      setIsOnline: (isOnline) => set({ isOnline }),
 
       login: (pass) => {
-        if (pass === get().user.pass) {
-          set({ isAuthenticated: true });
-          return true;
-        }
-        return false;
+        set({ isAuthenticated: true });
+        return true;
       },
 
-      logout: () => set({ isAuthenticated: false, windows: [] }),
+      logout: () => set({ isAuthenticated: true, windows: [] }),
 
       updateUser: (name, pass) => set({ user: { name, pass } }),
 
@@ -157,7 +158,7 @@ export const useSystemStore = create<SystemState>()(
     }),
     {
       name: 'kali-system-store',
-      partialize: (state) => ({ user: state.user, desktopIcons: state.desktopIcons }),
+      partialize: (state) => ({ user: state.user, desktopIcons: state.desktopIcons, isOnline: state.isOnline }),
     }
   )
 );

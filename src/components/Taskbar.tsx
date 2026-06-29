@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { Wifi, Battery, Volume2, ChevronUp } from 'lucide-react';
+import { Wifi, WifiOff, Battery, Volume2, ChevronUp } from 'lucide-react';
 import { useSystemStore } from '../store/useSystemStore';
 
 const START_MENU_APPS = [
@@ -44,7 +44,7 @@ const START_MENU_APPS = [
 export const Taskbar: React.FC = () => {
   const [time, setTime] = useState(new Date());
   const [isStartOpen, setIsStartOpen] = useState(false);
-  const { windows, activeWindowId, focusWindow, minimizeWindow, openWindow } = useSystemStore();
+  const { windows, activeWindowId, focusWindow, minimizeWindow, openWindow, isOnline, setIsOnline } = useSystemStore();
   const startMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -130,8 +130,17 @@ export const Taskbar: React.FC = () => {
         <button className="p-1.5 hover:bg-white/10 rounded transition-colors">
           <ChevronUp size={16} />
         </button>
-        <button className="p-1.5 hover:bg-white/10 rounded transition-colors">
-          <Wifi size={14} />
+        <button 
+          onClick={() => setIsOnline(!isOnline)}
+          className={`p-1 flex items-center gap-1 px-2 rounded transition-all text-xs border border-transparent select-none cursor-pointer ${
+            isOnline 
+              ? 'text-green-400 bg-green-500/10 hover:bg-green-500/25 border-green-500/20 hover:border-green-500/40' 
+              : 'text-red-400 bg-red-500/10 hover:bg-red-500/25 border-red-500/20 hover:border-red-500/40'
+          }`}
+          title={isOnline ? "Internet: Connected (Click to Go Offline)" : "Internet: Disconnected (Click to Go Online)"}
+        >
+          {isOnline ? <Wifi size={13} /> : <WifiOff size={13} />}
+          <span className="text-[10px] font-bold uppercase tracking-wider">{isOnline ? 'Online' : 'Offline'}</span>
         </button>
         <button className="p-1.5 hover:bg-white/10 rounded transition-colors">
           <Volume2 size={14} />

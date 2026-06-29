@@ -1,6 +1,8 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Kali Linux Web OS Simulator",
+  "description": "A fully featured virtual Kali Linux desktop environment in your browser, featuring simulated security tools, interactive shell, text editor, file browser, and offline-capable AI Agent assistant.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
