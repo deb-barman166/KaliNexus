@@ -151,4 +151,6 @@ If you like this project:
 «KaliNexus is not just a project —
 it's a full operating system experience inside your browser.»
 
-🔥 Build. Learn. Dominate.
+VERSION: 1.0.1
+
+🔥 Build. Learn. Dominate. 
